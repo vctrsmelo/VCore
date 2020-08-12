@@ -9,6 +9,6 @@ import Foundation
 
 extension Double {
     func currencyFormatted() -> String {
-        Formatter.currency.string(from: self)
+        Formatter.currency.string(from: NSDecimalNumber(value: self)) ?? ""
     }
 }
