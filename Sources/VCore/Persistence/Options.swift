@@ -13,4 +13,5 @@ public struct Options {
     public var encoder = JSONEncoder()
     public var decoder = JSONDecoder()
 
+    public init() {}
 }
