@@ -103,6 +103,24 @@ extension VStorage {
                        withExpiry expiry: Expiry,
                        fromDate date: @escaping (() -> Date) = { Date() },
                        fromData: (Data) throws -> T) throws -> T {
+        
+        try validateExpiry(key: key, expiry: expiry, date: date)
+        
+        return try (loadFromCache(key) ?? loadFromMemory(key, fromData: fromData))
+    }
+    
+    private func loadFromCache<T>(_ key: String) -> T? {
+        return cache.object(forKey: key as NSString) as? T
+    }
+    
+    private func loadFromMemory<T>(_ key: String, fromData: (Data) throws -> T) throws -> T {
+        let data = try Data(contentsOf: fileUrl(forKey: key))
+        let object = try fromData(data)
+        cache.setObject(object as AnyObject, forKey: key as NSString)
+        return object
+    }
+    
+    private func validateExpiry(key: String, expiry: Expiry, date: @escaping (() -> Date)) throws {
         switch expiry {
         case .never:
             break
@@ -110,15 +128,6 @@ extension VStorage {
             guard try verify(maxAge: maxAge, forKey: key, fromDate: date) else {
                 throw VStorageError.expired(maxAge: maxAge)
             }
-        }
-        
-        if let object = cache.object(forKey: key as NSString) as? T {
-            return object
-        } else {
-            let data = try Data(contentsOf: fileUrl(forKey: key))
-            let object = try fromData(data)
-            cache.setObject(object as AnyObject, forKey: key as NSString)
-            return object
         }
     }
 }
